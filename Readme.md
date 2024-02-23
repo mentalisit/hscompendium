@@ -3,12 +3,16 @@
 попытка реализовать компендиум бот для игры хадес стар
 
 
-На текущий момент реализовано: 
+
+    На текущий момент реализовано: 
+
     доступно в дискорд и телеграм
+
     %connect при отправке в групповых чатах
         приходит в ответ код срок действия 3 минуты 
         при запросе http://127.0.0.1/compendium/applink/identities?code=kZ3s-kJAl-LRkY
         возвращает данные пользователя 
+
     при запросе http://127.0.0.1/cmd/syncTech?token=R4pvgD1EJBvXzw0QTru6eYcAyAwWOZ0AMzHPLAwfSPlRSTNv&mode=get
         возвращает TechLevels map[int]TechLevel
 
