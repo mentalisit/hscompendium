@@ -4,9 +4,9 @@ import (
 	"compendium/models"
 	"compendium/storage"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/mentalisit/logger"
-	"log"
-	"net/http"
+	"os"
 )
 
 type Server struct {
@@ -15,6 +15,7 @@ type Server struct {
 }
 type db interface {
 	ReadIdentity() []models.Identity
+	ReadIdentityByToken(token string) models.Identity
 	InsertIdentity(c models.Identity)
 	UpdateIdentity(c models.Identity)
 	ReadSyncData(token string) models.SyncData
@@ -30,10 +31,22 @@ func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 }
 
 func (s *Server) RunServer() {
-	// Обработчик запросов для проверки идентификации
-	http.HandleFunc("/compendium/applink/identities", s.CheckIdentityHandler)
-	http.HandleFunc("/cmd/syncTech", s.SyncHandler)
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.Default()
+	// Обработчик для принятия сообщений от DiscordService
+	router.OPTIONS("/compendium/applink/identities", s.CheckIdentityOptions)
+	router.GET("/compendium/applink/identities", s.CheckIdentityHandler)
+	router.OPTIONS("/compendium/applink/connect", s.CheckConnectOptions)
+	router.POST("/compendium/applink/connect", s.CheckConnectHandler)
+	router.OPTIONS("/compendium/cmd/syncTech/get", s.CheckSyncTechOptions)
+	router.POST("/compendium/cmd/syncTech/get", s.CheckSyncTechHandler)
+	router.POST("/cmd/syncTech", s.SyncHandler)
+	router.OPTIONS("/compendium/cmd/corpdata", s.Check)            //?roleId=
+	router.GET("/compendium/cmd/corpdata", s.CheckCorpDataHandler) //?roleId=
 
-	// Запуск HTTP-сервера на порту 8080
-	log.Fatal(http.ListenAndServe(":80", nil))
+	err := router.Run(":80")
+	if err != nil {
+		s.log.ErrorErr(err)
+		os.Exit(1)
+	}
 }

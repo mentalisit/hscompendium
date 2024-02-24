@@ -20,17 +20,19 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 		}
 
 		i := models.IncomingMessage{
-			Text:        m.Content,
-			DmChat:      d.dmChannel(m.Author.ID),
-			Name:        m.Author.Username,
-			MentionName: m.Author.Mention(),
-			NameId:      m.Author.ID,
-			Avatar:      m.Author.AvatarURL("128"),
-			ChannelId:   m.ChannelID,
-			GuildId:     m.GuildID,
-			GuildName:   g.Name,
-			GuildAvatar: g.IconURL("128"),
-			Type:        "ds",
+			Text:         m.Content,
+			DmChat:       d.dmChannel(m.Author.ID),
+			Name:         m.Author.Username,
+			MentionName:  m.Author.Mention(),
+			NameId:       m.Author.ID,
+			Avatar:       m.Author.AvatarURL("128"),
+			AvatarF:      m.Author.Avatar,
+			ChannelId:    m.ChannelID,
+			GuildId:      m.GuildID,
+			GuildName:    g.Name,
+			GuildAvatar:  g.IconURL("128"),
+			GuildAvatarF: g.Icon,
+			Type:         "ds",
 		}
 
 		d.ChanMessage <- i

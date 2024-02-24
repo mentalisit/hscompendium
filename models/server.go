@@ -1,9 +1,9 @@
 package models
 
 type Identity struct {
-	User  User   `json:"user"`
-	Guild Guild  `json:"guild"`
-	Token string `json:"token"`
+	User  User    `json:"user"`
+	Guild []Guild `json:"guild"`
+	Token string  `json:"token"`
 }
 
 // структура для хранения в будущем игрока и твина и так же нескольких корпораций
@@ -36,4 +36,29 @@ type SyncData struct {
 	Ver        int
 	InSync     int
 	TechLevels map[int]TechLevel
+}
+type CorpData struct {
+	Members    []CorpMember
+	Roles      []CorpRole
+	FilterId   *string // Current filter roleId
+	FilterName *string // Name of current filter roleId
+}
+
+type CorpMember struct {
+	Name         string
+	UserId       string
+	ClientUserId string
+	Avatar       *string
+	Tech         map[int][]int
+	AvatarUrl    *string
+	TimeZone     *string
+	LocalTime    *string
+	ZoneOffset   *int    // TZ offset in minutes
+	AfkFor       *string // readable afk duration
+	AfkWhen      *int    // Unix Epoch when user returns
+}
+
+type CorpRole struct {
+	Id   string
+	Name string
 }

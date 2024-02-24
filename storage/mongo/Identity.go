@@ -22,6 +22,17 @@ func (d *DB) ReadIdentity() []models.Identity {
 	}
 	return m
 }
+func (d *DB) ReadIdentityByToken(token string) models.Identity {
+	var data models.Identity
+	collection := d.s.Database("Compendium").Collection("Identity")
+	err := collection.FindOne(context.Background(), bson.M{"token": token}).Decode(&data)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return models.Identity{}
+	}
+	return data
+}
+
 func (d *DB) InsertIdentity(c models.Identity) {
 
 	d.s.Database("Compendium").CreateCollection(context.Background(), "Identity")

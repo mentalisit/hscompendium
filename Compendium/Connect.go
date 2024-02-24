@@ -21,15 +21,15 @@ func (c *Compendium) generate() models.Identity {
 			ID:            c.in.NameId,
 			Username:      c.in.Name,
 			Discriminator: "",
-			Avatar:        "",
+			Avatar:        c.in.AvatarF,
 			AvatarURL:     c.in.Avatar,
 		},
-		Guild: models.Guild{
+		Guild: []models.Guild{models.Guild{
 			URL:  c.in.GuildAvatar,
 			ID:   c.in.GuildId,
 			Name: c.in.GuildName,
-			Icon: "",
-		},
+			Icon: c.in.GuildAvatarF,
+		}},
 		Token: generate2.GenerateToken(),
 	}
 	return identity

@@ -5,45 +5,78 @@ import (
 	"compendium/models"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-func (s *Server) CheckIdentityHandler(w http.ResponseWriter, r *http.Request) {
-	// Получение параметра "code" из запроса
-	code := r.URL.Query().Get("code")
+func (s *Server) CheckIdentityHandler(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Authorization")
+	code := c.GetHeader("authorization")
+	fmt.Println("code", code)
 
-	// Проверка наличия кода в запросе
+	// Проверка наличия кода в запросе и его длины
 	if code == "" || len(code) != 14 {
-		http.Error(w, "Invalid code", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid code"})
 		return
 	}
 
+	// Здесь должна быть ваша логика для генерации идентификации на основе полученного кода
 	identity := generate.CheckCode(code)
 
+	// Проверка на наличие токена в полученной идентификации
 	if identity.Token == "" {
-		http.Error(w, "Outdated or invalid code", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Outdated or invalid code"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(identity)
+	// Отправка идентификации в формате JSON
+	c.JSON(http.StatusOK, identity)
+	cc = identity
+
+	// Запуск асинхронной операции вставки идентификации в базу данных
 	go s.db.InsertIdentity(identity)
 }
 
-func (s *Server) SyncHandler(w http.ResponseWriter, r *http.Request) {
-	// Получение параметров из запроса
-	token := r.FormValue("token") //getByToken
-	identity := s.GetTokenIdentity(token)
-	if identity == nil {
-		http.Error(w, fmt.Sprintf("Invalid token "), http.StatusBadRequest)
+var cc models.Identity
+
+func (s *Server) CheckConnectHandler(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
+	//c.Header("Access-Control-Allow-Headers", "Authorization, no-cors, method, cache, headers")
+	code := c.GetHeader("authorization")
+	fmt.Println("authorization", code)
+	c.JSON(http.StatusOK, cc)
+}
+func (s *Server) CheckSyncTechHandler(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
+	//c.Header("Access-Control-Allow-Headers", "Authorization, no-cors, method, cache, headers")
+	code := c.GetHeader("authorization")
+	fmt.Println("authorization", code)
+	c.JSON(http.StatusOK, cc)
+}
+
+func (s *Server) SyncHandler(c *gin.Context) {
+	// Получение параметра "token" из запроса
+	token := c.Query("token")
+
+	// Проверка наличия токена в запросе
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
 		return
 	}
-	mode := r.FormValue("mode")
-	fmt.Println(mode)
-	// Примечание: r.FormValue получает значение параметра из URL-запроса или тела запроса (если это POST-запрос)
 
+	// Получение параметра "mode" из запроса
+	mode := c.Query("mode")
+
+	fmt.Println(mode)
 	// Проверка корректности режима
 	if mode != "get" && mode != "set" && mode != "sync" {
-		http.Error(w, fmt.Sprintf("Invalid sync mode %s", mode), http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid sync mode %s", mode)})
 		return
 	}
 
@@ -64,18 +97,12 @@ func (s *Server) SyncHandler(w http.ResponseWriter, r *http.Request) {
 	// Преобразование данных в JSON
 	payload, err := json.Marshal(data)
 	if err != nil {
-		http.Error(w, "Failed to marshal JSON", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal JSON"})
 		return
 	}
-	//нужно еще реализовать методы set,sync
-
-	// Отправка запроса к другому API (заглушка для примера)
-	// Замените этот блок на фактический код для обращения к другому API
-	// Примечание: В этом примере просто выводим данные для примера
-	fmt.Println(string(payload))
 
 	// Отправка ответа клиенту
-	fmt.Fprintf(w, "Sync data: %s", string(payload))
+	c.JSON(http.StatusOK, string(payload))
 }
 func (s *Server) GetTokenIdentity(token string) *models.Identity {
 	for _, identity := range s.db.ReadIdentity() {
@@ -84,4 +111,43 @@ func (s *Server) GetTokenIdentity(token string) *models.Identity {
 		}
 	}
 	return nil
+}
+
+func (s *Server) CheckCorpDataHandler(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Authorization")
+	token := c.GetHeader("authorization")
+	fmt.Println("token", token)
+	i := s.db.ReadIdentityByToken(token)
+	if i.Token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid code"})
+		return
+	}
+	var corp models.CorpData
+	corp.Members = append(corp.Members, models.CorpMember{
+		Name:         "mentalisit",
+		UserId:       "1111111",
+		ClientUserId: "222222",
+	})
+	corp.Roles = append(corp.Roles, models.CorpRole{
+		Id:   "333",
+		Name: "erevan",
+	})
+	c.JSON(http.StatusOK, corp)
+	//if code == "" || len(code) != 14 {
+	//
+	//}
+	//
+	//// Здесь должна быть ваша логика для генерации идентификации на основе полученного кода
+	//identity := generate.CheckCode(code)
+	//
+	//// Проверка на наличие токена в полученной идентификации
+	//if identity.Token == "" {
+	//	c.JSON(http.StatusBadRequest, gin.H{"error": "Outdated or invalid code"})
+	//	return
+	//}
+	//
+	//// Отправка идентификации в формате JSON
+	//c.JSON(http.StatusOK, identity)
 }
