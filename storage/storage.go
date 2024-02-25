@@ -2,7 +2,7 @@ package storage
 
 import (
 	"compendium/config"
-	"compendium/storage/mongo"
+	"compendium/storage/postgres"
 	"github.com/mentalisit/logger"
 	"go.uber.org/zap"
 )
@@ -10,16 +10,15 @@ import (
 type Storage struct {
 	log   *zap.Logger
 	debug bool
-	Temp  *mongo.DB
+	Temp  *postgres.Db
 }
 
 func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
-
-	mongoDB := mongo.InitMongoDB(log)
+	local := postgres.NewDb(log, cfg)
 
 	s := &Storage{
 
-		Temp: mongoDB,
+		Temp: local,
 	}
 
 	//go s.loadDbArray()

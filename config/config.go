@@ -16,7 +16,13 @@ type ConfigBot struct {
 		ChatId  int64  `yaml:"chat_id"`
 		Webhook string `yaml:"webhook"`
 	} `yaml:"logger"`
-	Mongo string `yaml:"mongo"`
+	Mongo     string `yaml:"mongo"`
+	Postgress struct {
+		Host     string `yaml:"host" env-default:"127.0.0.1:5432"`
+		Name     string `yaml:"name" env-default:"postgres"`
+		Username string `yaml:"username" env-default:"postgres"`
+		Password string `yaml:"password" env-default:"root"`
+	} `yaml:"postgress"`
 }
 
 var Instance *ConfigBot

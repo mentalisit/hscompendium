@@ -1,0 +1,50 @@
+create table if not exists compendium.corpmember
+(
+    guildid      text,
+    name         text,
+    userid       text,
+    clientuserid text,
+    avatar       text,
+    tech         jsonb,
+    avatarurl    text,
+    timezona     text,
+    zonaoffset   text,
+    afkfor       text
+);
+
+alter table compendium.corpmember
+    owner to postgres;
+
+create table compendium.guild
+(
+    token text,
+    url   text,
+    id    text,
+    name  text,
+    icon  text
+);
+
+alter table compendium.guild
+    owner to postgres;
+
+create table compendium.identity
+(
+    id text not null
+);
+
+alter table compendium.identity
+    owner to postgres;
+
+create table compendium."user"
+(
+    token         text,
+    id            text,
+    username      text,
+    discriminator text,
+    avatar        text,
+    avatarurl     text
+);
+
+alter table compendium."user"
+    owner to postgres;
+

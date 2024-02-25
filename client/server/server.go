@@ -1,7 +1,7 @@
 package server
 
 import (
-	"compendium/models"
+	"compendium/client/ds"
 	"compendium/storage"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -11,20 +11,15 @@ import (
 
 type Server struct {
 	log *logger.Logger
-	db  db
-}
-type db interface {
-	ReadIdentity() []models.Identity
-	ReadIdentityByToken(token string) models.Identity
-	InsertIdentity(c models.Identity)
-	UpdateIdentity(c models.Identity)
-	ReadSyncData(token string) models.SyncData
+	db  *storage.Storage
+	ds  *ds.Discord
 }
 
-func NewServer(log *logger.Logger, st *storage.Storage) *Server {
+func NewServer(log *logger.Logger, st *storage.Storage, d *ds.Discord) *Server {
 	s := &Server{
 		log: log,
-		db:  st.Temp,
+		db:  st,
+		ds:  d,
 	}
 	fmt.Println("Server load")
 	return s
@@ -34,15 +29,20 @@ func (s *Server) RunServer() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	// Обработчик для принятия сообщений от DiscordService
-	router.OPTIONS("/compendium/applink/identities", s.CheckIdentityOptions)
+	router.OPTIONS("/compendium/applink/identities", s.Check)
 	router.GET("/compendium/applink/identities", s.CheckIdentityHandler)
-	router.OPTIONS("/compendium/applink/connect", s.CheckConnectOptions)
+
+	router.OPTIONS("/compendium/applink/connect", s.Check)
 	router.POST("/compendium/applink/connect", s.CheckConnectHandler)
-	router.OPTIONS("/compendium/cmd/syncTech/get", s.CheckSyncTechOptions)
-	router.POST("/compendium/cmd/syncTech/get", s.CheckSyncTechHandler)
-	router.POST("/cmd/syncTech", s.SyncHandler)
-	router.OPTIONS("/compendium/cmd/corpdata", s.Check)            //?roleId=
-	router.GET("/compendium/cmd/corpdata", s.CheckCorpDataHandler) //?roleId=
+
+	router.OPTIONS("/compendium/cmd/syncTech/:mode", s.Check)
+	router.POST("/compendium/cmd/syncTech/:mode", s.CheckSyncTechHandler)
+
+	router.OPTIONS("/compendium/cmd/corpdata", s.Check)
+	router.GET("/compendium/cmd/corpdata", s.CheckCorpDataHandler)
+
+	router.OPTIONS("/compendium/applink/refresh", s.Check)
+	router.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
 
 	err := router.Run(":80")
 	if err != nil {
