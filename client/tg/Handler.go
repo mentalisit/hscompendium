@@ -41,15 +41,17 @@ func (t *Telegram) messageHandler(m *tgbotapi.Message) {
 		ChatId := strconv.FormatInt(m.Chat.ID, 10) + fmt.Sprintf("/%d", ThreadID)
 
 		i := models.IncomingMessage{
-			Text:        m.Text,
-			DmChat:      strconv.FormatInt(m.From.ID, 10),
-			Name:        m.From.UserName,
-			MentionName: "@" + m.From.UserName,
-			NameId:      strconv.FormatInt(m.From.ID, 10),
-			Avatar:      AvatarUser,
-			ChannelId:   ChatId,
-			GuildId:     strconv.FormatInt(m.Chat.ID, 10),
-			GuildName:   m.Chat.Title,
+			Text:         m.Text,
+			DmChat:       strconv.FormatInt(m.From.ID, 10),
+			Name:         m.From.UserName,
+			MentionName:  "@" + m.From.UserName,
+			NameId:       strconv.FormatInt(m.From.ID, 10),
+			Avatar:       AvatarUser,
+			AvatarF:      "tg",
+			ChannelId:    ChatId,
+			GuildId:      strconv.FormatInt(m.Chat.ID, 10),
+			GuildName:    m.Chat.Title,
+			GuildAvatarF: "tg",
 
 			Type: "tg",
 		}
