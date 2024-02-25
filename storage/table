@@ -8,7 +8,7 @@ create table if not exists compendium.corpmember
     tech         jsonb,
     avatarurl    text,
     timezona     text,
-    zonaoffset   text,
+    zonaoffset   number,
     afkfor       text
 );
 
