@@ -17,6 +17,7 @@ type ConfigBot struct {
 		Webhook string `yaml:"webhook"`
 	} `yaml:"logger"`
 	Mongo     string `yaml:"mongo"`
+	Port      string `yaml:"port"`
 	Postgress struct {
 		Host     string `yaml:"host" env-default:"127.0.0.1:5432"`
 		Name     string `yaml:"name" env-default:"postgres"`

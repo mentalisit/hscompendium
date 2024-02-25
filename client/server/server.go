@@ -2,6 +2,7 @@ package server
 
 import (
 	"compendium/client/ds"
+	"compendium/config"
 	"compendium/storage"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -15,17 +16,18 @@ type Server struct {
 	ds  *ds.Discord
 }
 
-func NewServer(log *logger.Logger, st *storage.Storage, d *ds.Discord) *Server {
+func NewServer(log *logger.Logger, cfg *config.ConfigBot, st *storage.Storage, d *ds.Discord) *Server {
 	s := &Server{
 		log: log,
 		db:  st,
 		ds:  d,
 	}
 	fmt.Println("Server load")
+	go s.RunServer(cfg.Port)
 	return s
 }
 
-func (s *Server) RunServer() {
+func (s *Server) RunServer(port string) {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	// Обработчик для принятия сообщений от DiscordService
@@ -43,8 +45,8 @@ func (s *Server) RunServer() {
 
 	router.OPTIONS("/compendium/applink/refresh", s.Check)
 	router.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
-
-	err := router.Run(":80")
+	fmt.Println("Running port:" + port)
+	err := router.Run(":" + port)
 	if err != nil {
 		s.log.ErrorErr(err)
 		os.Exit(1)

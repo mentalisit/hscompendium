@@ -23,8 +23,7 @@ func main() {
 	t := tg.NewTelegram(log, cfg, st)
 
 	Compendium.NewCompendium(d, t, log)
-	s := server.NewServer(log, st, d)
-	s.RunServer()
+	server.NewServer(log, cfg, st, d)
 
 	fmt.Println("load ok ")
 	//ожидаем сигнала завершения
