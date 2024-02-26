@@ -46,7 +46,7 @@ func (s *Server) RunServer(port string) {
 	router.OPTIONS("/compendium/applink/refresh", s.Check)
 	router.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
 	fmt.Println("Running port:" + port)
-	err := router.Run(":" + port)
+	err := router.RunTLS(":"+port, "cert1.pem", "privkey1.pem")
 	if err != nil {
 		s.log.ErrorErr(err)
 		os.Exit(1)
