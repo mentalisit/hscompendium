@@ -3,19 +3,47 @@ package postgres
 import (
 	"compendium/models"
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 )
 
 func (d *Db) corpMemberInsert(ctx context.Context, guildid string, u models.CorpMember) {
-	Tech, err := json.Marshal(u.Tech)
-	if err != nil {
-		d.log.Info(err.Error())
-	}
+	// Проверяем существует ли запись для данного игрока в таблице
+	var existingGuildID string
+	err := d.db.QueryRow(ctx, "SELECT guildid FROM compendium.corpmember WHERE userid = $1", u.UserId).Scan(&existingGuildID)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		// Если запись не найдена, вставляем новую запись
+		Tech, err := json.Marshal(u.Tech)
+		if err != nil {
+			d.log.Info(err.Error())
+		}
 
-	insert := `INSERT INTO compendium.corpmember(guildid, name, userid, clientuserid, avatar, tech, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`
-	_, err = d.db.Exec(ctx, insert, guildid, u.Name, u.UserId, u.ClientUserId, u.Avatar, Tech, u.AvatarUrl, u.TimeZone, u.ZoneOffset, u.AfkFor)
-	if err != nil {
+		insert := `INSERT INTO compendium.corpmember(guildid, name, userid, clientuserid, avatar, tech, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`
+		_, err = d.db.Exec(ctx, insert, guildid, u.Name, u.UserId, u.ClientUserId, u.Avatar, Tech, u.AvatarUrl, u.TimeZone, u.ZoneOffset, u.AfkFor)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+		return
+	case err != nil:
 		d.log.ErrorErr(err)
+		return
+	default:
+		// Если запись найдена, проверяем совпадает ли guildID
+		if existingGuildID != guildid {
+			Tech, err := json.Marshal(u.Tech)
+			if err != nil {
+				d.log.Info(err.Error())
+			}
+
+			insert := `INSERT INTO compendium.corpmember(guildid, name, userid, clientuserid, avatar, tech, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`
+			_, err = d.db.Exec(ctx, insert, guildid, u.Name, u.UserId, u.ClientUserId, u.Avatar, Tech, u.AvatarUrl, u.TimeZone, u.ZoneOffset, u.AfkFor)
+			if err != nil {
+				d.log.ErrorErr(err)
+			}
+			return
+		}
 	}
 }
 func (d *Db) CorpMemberReadAllByGuildId(ctx context.Context, guildid string) []models.CorpMemberint {

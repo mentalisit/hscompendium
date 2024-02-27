@@ -3,14 +3,29 @@ package Compendium
 import (
 	generate2 "compendium/Compendium/generate"
 	"compendium/models"
+	"fmt"
 )
 
 func (c *Compendium) connect() {
-	//c.sendChat(c.in.MentionName+", Instructions have been sent to you via DM.")
-	//c.sendDM(fmt.Sprintf("Here is a connect code to connect your app to the %s server.", c.in.GuildName))
+
+	err := c.sendDM(fmt.Sprintf("Вот код подключения для подключения приложения к серверу %s.", c.in.GuildName))
+	if err != nil && err.Error() == "Forbidden: bot can't initiate conversation with a user" {
+		c.sendChat(c.in.MentionName +
+			" пожалуйста отправьте мне команду старт в личных сообщениях, " +
+			"я как бот не могу первый отправить вам личное сообщение. " +
+			"И после повторите команду  ")
+		return
+	}
+	c.sendChat(c.in.MentionName + ", Инструкцию отправили вам в Директ.")
 	code := generate2.GenerateFormattedString(c.generate())
-	c.sendDM(code)
-	//c.sendDM("Please insert code in app\nhttps://userxinos.github.io/HadesSpace/ or https://userxinos.github.io/HadesSpaceNew")
+	err = c.sendDM(code)
+	if err != nil {
+		return
+	}
+	err = c.sendDM("Пожалуйста, вставьте код в приложение\nhttps://mentalisit.github.io/HadesSpace/")
+	if err != nil {
+		return
+	}
 }
 
 func (c *Compendium) generate() models.Identity {

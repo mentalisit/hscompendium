@@ -4,7 +4,6 @@ import (
 	"compendium/models"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -17,6 +16,7 @@ func (t *Telegram) update() {
 	for update := range updates {
 		if update.Message != nil {
 			if update.Message.Chat.IsPrivate() { //если пишут боту в личку
+				//t.messagePrivatHandler(update.Message)
 			} else if update.Message.IsCommand() { //если сообщение является командой
 			} else { //остальные сообщения
 				t.messageHandler(update.Message)
@@ -30,10 +30,6 @@ func (t *Telegram) update() {
 func (t *Telegram) messageHandler(m *tgbotapi.Message) {
 
 	if strings.HasPrefix(m.Text, "%") {
-
-		userProfilePhotos, _ := t.t.GetUserProfilePhotos(tgbotapi.UserProfilePhotosConfig{UserID: m.From.ID})
-		AvatarUser := t.getFileLink(userProfilePhotos.Photos[0][0].FileID)
-
 		ThreadID := m.MessageThreadID
 		if !m.IsTopicMessage && ThreadID != 0 {
 			ThreadID = 0
@@ -43,10 +39,10 @@ func (t *Telegram) messageHandler(m *tgbotapi.Message) {
 		i := models.IncomingMessage{
 			Text:         m.Text,
 			DmChat:       strconv.FormatInt(m.From.ID, 10),
-			Name:         m.From.UserName,
-			MentionName:  "@" + m.From.UserName,
+			Name:         m.From.String(),
+			MentionName:  "@" + m.From.String(),
 			NameId:       strconv.FormatInt(m.From.ID, 10),
-			Avatar:       AvatarUser,
+			Avatar:       t.GetAvatar(m.From.ID),
 			AvatarF:      "tg",
 			ChannelId:    ChatId,
 			GuildId:      strconv.FormatInt(m.Chat.ID, 10),
@@ -57,7 +53,7 @@ func (t *Telegram) messageHandler(m *tgbotapi.Message) {
 		}
 		chat, err := t.t.GetChat(tgbotapi.ChatInfoConfig{ChatConfig: m.Chat.ChatConfig()})
 		if err != nil {
-			log.Panic(err)
+			t.log.Error(err.Error())
 		}
 		if chat.Photo != nil {
 			i.GuildAvatar = t.getFileLink(chat.Photo.BigFileID)
@@ -67,31 +63,34 @@ func (t *Telegram) messageHandler(m *tgbotapi.Message) {
 
 	}
 }
-func (t *Telegram) getFileLink(fileId string) string {
-	fileconfig := tgbotapi.FileConfig{FileID: fileId}
-	file, _ := t.t.GetFile(fileconfig)
-	if file.FileID != "" {
-		return "https://api.telegram.org/file/bot" + t.t.Token + "/" + file.FilePath
-	}
-	return ""
-}
+func (t *Telegram) messagePrivatHandler(m *tgbotapi.Message) {
 
-// отправка сообщения в телегу
-func (t *Telegram) Send(chatid string, text string) int {
-	a := strings.SplitN(chatid, "/", 2)
-	chatId, err := strconv.ParseInt(a[0], 10, 64)
+	after, _ := strings.CutPrefix(m.Text, "%")
+	ChatId := strconv.FormatInt(m.Chat.ID, 10)
+
+	i := models.IncomingMessage{
+		Text:         after,
+		DmChat:       strconv.FormatInt(m.From.ID, 10),
+		Name:         m.From.String(),
+		MentionName:  "@" + m.From.String(),
+		NameId:       strconv.FormatInt(m.From.ID, 10),
+		Avatar:       t.GetAvatar(m.From.ID),
+		AvatarF:      "tg",
+		ChannelId:    ChatId,
+		GuildId:      strconv.FormatInt(m.Chat.ID, 10),
+		GuildName:    m.Chat.Title,
+		GuildAvatarF: "tg",
+
+		Type: "tg",
+	}
+	chat, err := t.t.GetChat(tgbotapi.ChatInfoConfig{ChatConfig: m.Chat.ChatConfig()})
 	if err != nil {
-		t.log.ErrorErr(err)
+		t.log.Error(err.Error())
 	}
-	ThreadID := 0
-	if len(a) > 1 {
-		ThreadID, err = strconv.Atoi(a[1])
-		if err != nil {
-			t.log.ErrorErr(err)
-		}
+	if chat.Photo != nil {
+		i.GuildAvatar = t.getFileLink(chat.Photo.BigFileID)
 	}
-	m := tgbotapi.NewMessage(chatId, text)
-	m.MessageThreadID = ThreadID
-	tMessage, _ := t.t.Send(m)
-	return tMessage.MessageID
+
+	t.ChanMessage <- i
+
 }
