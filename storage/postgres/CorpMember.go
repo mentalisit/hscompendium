@@ -3,9 +3,9 @@ package postgres
 import (
 	"compendium/models"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
+	"github.com/jackc/pgx/v4"
 )
 
 func (d *Db) corpMemberInsert(ctx context.Context, guildid string, u models.CorpMember) {
@@ -13,7 +13,7 @@ func (d *Db) corpMemberInsert(ctx context.Context, guildid string, u models.Corp
 	var existingGuildID string
 	err := d.db.QueryRow(ctx, "SELECT guildid FROM compendium.corpmember WHERE userid = $1", u.UserId).Scan(&existingGuildID)
 	switch {
-	case errors.Is(err, sql.ErrNoRows):
+	case errors.Is(err, pgx.ErrNoRows):
 		// Если запись не найдена, вставляем новую запись
 		Tech, err := json.Marshal(u.Tech)
 		if err != nil {
